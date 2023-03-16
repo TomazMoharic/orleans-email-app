@@ -29,4 +29,11 @@ public class WeatherForecastController : ControllerBase
             })
             .ToArray();
     }
+    
+    [Route("Test")]
+    [HttpGet(Name = "Test")]
+    public ActionResult<string> Test()
+    {
+        return "Hello World";
+    }
 }
