@@ -18,7 +18,8 @@ public class WeatherForecastController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet(Name = "GetWeatherForecast")]
+    [HttpGet]
+	[Route("Weather")]
     public IEnumerable<WeatherForecast> Get()
     {
         return Enumerable.Range(1, 5).Select(index => new WeatherForecast
@@ -30,8 +31,9 @@ public class WeatherForecastController : ControllerBase
             .ToArray();
     }
     
+
+    [HttpGet]
     [Route("Test")]
-    [HttpGet(Name = "Test")]
     public ActionResult<string> Test()
     {
         return "Hello World";
