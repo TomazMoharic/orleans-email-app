@@ -2,6 +2,7 @@ using Azure.Storage.Blobs;
 using Microsoft.Extensions.Azure;
 using Orleans.Configuration;
 using OrleansEmailApp;
+using OrleansEmailApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,12 +36,10 @@ builder.Services.ConfigureSwaggerGen(setup =>
     });
 });
 
+builder.Services.AddTransient<IBreachedEmailService, BreachedEmailService>();
 
 
-
-
-// if (builder.Environment.IsDevelopment())
-// {
+// add Orleans
 builder.Host.UseOrleans(siloBuilder =>
 {
     siloBuilder.UseLocalhostClustering();   
@@ -51,19 +50,17 @@ builder.Host.UseOrleans(siloBuilder =>
             options.ConfigureBlobServiceClient(
                 builder.Configuration["AzureBlobStorageAccessKey"]);
         });
-    //siloBuilder.AddMemoryGrainStorage("emails");
-    // siloBuilder.UseDashboard();
 });
 
 var app = builder.Build();
 
-app.UseSwagger();
+app.UseSwagger(); 
+app.UseSwaggerUI();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwaggerUI();
-}
+// if (app.Environment.IsDevelopment())
+// {
+// }
 
 app.UseHttpsRedirection();
 
@@ -72,36 +69,14 @@ app.UseAuthorization();
 app.MapGet("/", () => "Hello World!");
 
 app.MapPost("/{email}",
-    async (IGrainFactory grains, HttpRequest request, string email) =>
+    async (IBreachedEmailService breachedEmailService, HttpRequest request, string email) =>
     {
-        string emailDomain = Helpers.ExtractEmailDomain(email);
-        
-        IDomainBreachedEmailsGrain? emailDomainGrain = grains.GetGrain<IDomainBreachedEmailsGrain>(emailDomain);
+        string? response = await breachedEmailService.AddEmailToBreachedList(email);
 
-        DomainBreachedEmails? domainObject = await emailDomainGrain.GetItem();
-
-        string? addedEmail = domainObject?.DomainEmails.FirstOrDefault(de => de == email);
-        
-        if (domainObject is not null)
+        if (response is null)
         {
-            if (addedEmail is not null)
-            {
-                return Results.Conflict("This email already exists in the list of breached emails.");
-            }
-            
-            domainObject.DomainEmails.Add(email);
+            return Results.Conflict("This email already existing in the list of breached emails.");
         }
-        else
-        {
-            domainObject = new DomainBreachedEmails
-            {
-                Domain = emailDomain,
-                DomainEmails = new List<string> { email },
-            };
-        }
-
-        
-        await emailDomainGrain.SetItem(domainObject);
         
         var resultBuilder = new UriBuilder($"{ request.Scheme }://{ request.Host.Value}")
         {
@@ -112,17 +87,11 @@ app.MapPost("/{email}",
     });
 
 app.MapGet("/{email}",
-    async (IGrainFactory grains, string email) =>
+    async (IBreachedEmailService breachedEmailService, string email) =>
     {
-        string emailDomain = Helpers.ExtractEmailDomain(email);
-        
-        IDomainBreachedEmailsGrain? emailDomainGrain = grains.GetGrain<IDomainBreachedEmailsGrain>(emailDomain);
+        string? response = await breachedEmailService.CheckIfEmailIsBreached(email);
 
-        DomainBreachedEmails? domainObject = await emailDomainGrain.GetItem();
-        
-        var existingEmail = domainObject?.DomainEmails.FirstOrDefault(de => de == email);
-
-        if (domainObject is null || existingEmail is null)
+        if (response is null)
         {
             return Results.NotFound("This email does not exist in the list of breached emails. This email is clean!");
         }

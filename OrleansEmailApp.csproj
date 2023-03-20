@@ -88,7 +88,6 @@
     <ItemGroup>
       <Folder Include="obj\.git\objects\info" />
       <Folder Include="obj\.git\refs\tags" />
-      <Folder Include="Services\Interfaces" />
     </ItemGroup>
 
 </Project>
