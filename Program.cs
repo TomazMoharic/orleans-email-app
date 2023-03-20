@@ -38,14 +38,14 @@ builder.Services.ConfigureSwaggerGen(setup =>
 builder.Host.UseOrleans(siloBuilder =>
 {
     siloBuilder.UseLocalhostClustering();   
-    siloBuilder.AddAzureBlobGrainStorage(
-        name: "emails",
-        configureOptions: options =>
-        {
-            options.ConfigureBlobServiceClient(
-                builder.Configuration["AzureBlobStorageAccessKey"]);
-        });
-    //siloBuilder.AddMemoryGrainStorage("emails");
+    // siloBuilder.AddAzureBlobGrainStorage(
+    //     name: "emails",
+    //     configureOptions: options =>
+    //     {
+    //         options.ConfigureBlobServiceClient(
+    //             builder.Configuration["AzureBlobStorageAccessKey"]);
+    //     });
+    siloBuilder.AddMemoryGrainStorage("emails");
     // siloBuilder.UseDashboard();
 });
 // }
