@@ -5,18 +5,24 @@ using OrleansEmailApp;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment())
+{
 // Add services to the container.
-builder.Configuration
-    .SetBasePath(Directory.GetCurrentDirectory())
-    // .AddJsonFile("settings.json", false, true)
-    .AddJsonFile($"appsettings.Local.json", false, true)
-    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", false, true)
-    .AddEnvironmentVariables();
-
+    builder.Configuration
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile($"appsettings.Local.json", false, true)
+        .AddEnvironmentVariables();
+}
+else
+{
+    builder.Configuration
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile($"appsettings.json", false, true)
+        .AddEnvironmentVariables();
+}
 
 builder.Services.AddControllers();
 builder.Services.AddAuthorization();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -38,45 +44,16 @@ builder.Services.ConfigureSwaggerGen(setup =>
 builder.Host.UseOrleans(siloBuilder =>
 {
     siloBuilder.UseLocalhostClustering();   
-    // siloBuilder.AddAzureBlobGrainStorage(
-    //     name: "emails",
-    //     configureOptions: options =>
-    //     {
-    //         options.ConfigureBlobServiceClient(
-    //             builder.Configuration["AzureBlobStorageAccessKey"]);
-    //     });
-    siloBuilder.AddMemoryGrainStorage("emails");
+    siloBuilder.AddAzureBlobGrainStorage(
+        name: "emails",
+        configureOptions: options =>
+        {
+            options.ConfigureBlobServiceClient(
+                builder.Configuration["AzureBlobStorageAccessKey"]);
+        });
+    //siloBuilder.AddMemoryGrainStorage("emails");
     // siloBuilder.UseDashboard();
 });
-// }
-// else
-// {
-//     builder.Host.UseOrleans(siloBuilder =>
-//     {
-//         var connectionString = "your_storage_connection_string";
-//
-         // siloBuilder.AddAzureBlobGrainStorage(
-         //     name: "profileStore",
-         //     configureOptions: options =>
-         //     {
-         //         options.ConfigureBlobServiceClient(
-         //             builder.Configuration["AzureBlobStorageConnectionString"]);
-         //     });
-//         
-//         siloBuilder.Configure<ClusterOptions>(options =>
-//         {
-//             options.ClusterId = "url-shortener";
-//             options.ServiceId = "urls";
-//         });
-//     });
-// }
-
-// builder.Host.UseOrleans(siloBuilder =>
-// {
-//     siloBuilder.UseLocalhostClustering();
-//     siloBuilder.AddMemoryGrainStorage("emails");
-//
-// });
 
 var app = builder.Build();
 
